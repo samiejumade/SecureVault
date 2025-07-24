@@ -106,3 +106,4 @@ I do not give any warranties and will not be liable for any loss incurred throug
 
 ### Demo
 
+https://github.com/samiejumade/SecureVault/blob/main/resources/Lit%20Protocol%20-%20SecureVault%20-%2024%20July%202025.mp4
