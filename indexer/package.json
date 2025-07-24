@@ -1,0 +1,27 @@
+{
+  "name": "keymanager-subgraph",
+  "license": "UNLICENSED",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy --studio SecureVault",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 your-local/key-manager",
+    "auth": "graph auth --studio",
+    "test": "graph test"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-ts": "^0.28.1"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "0.60.0",
+    "matchstick-as": "^0.5.0"
+  },
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": "",
+  "description": ""
+}
