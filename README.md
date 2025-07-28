@@ -101,7 +101,7 @@ yarn dev
 
 This is experimental software and is provided on an "as is" and "as available" basis.
 
-Lit Password Manager is a proof of concept and is not ready for production use. It is not audited and has not been tested for security. Use at your own risk.
+SecureVault is a proof of concept and is not ready for production use. It is not audited and has not been tested for security. Use at your own risk.
 I do not give any warranties and will not be liable for any loss incurred through any use of this codebase.
 
 ### Demo
