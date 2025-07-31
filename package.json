@@ -10,14 +10,14 @@
     "deploy:studio": "graph deploy --node https://api.studio.thegraph.com/deploy/ passwordmanager"
   },
   "keywords": [],
-  "author": "Salman Dabbakuti",
+  "author": "Samir Jumade",
   "license": "ISC",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.1.1",
     "chai": "^4.3.6",
     "dotenv": "^16.0.3",
     "ethers": "^5.7.0",
-    "graphprotocol-tools-monorepo": "github:graphprotocol/graph-tooling",
+    "graphprotocol-tools-monorepo": "",
     "hardhat": "^2.10.2"
   }
 }
