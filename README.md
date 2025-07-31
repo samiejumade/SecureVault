@@ -51,9 +51,9 @@ const accessControlConditions = [
 
 ### Deployed Resources:
 
-- [Lit Password Manager App](https://lit-password-manager.vercel.app/)
-- [Lit Password Manager Subgraph]()
-- [Lit Password Manager Smartcontract](https://testnet.bscscan.com/address/0x047B3cc70130F34387D00c923AA117cf22F989D2)
+- [Lit SecureVault App](https://lit-password-manager.vercel.app/)
+- [Lit SecureVault Subgraph]()
+- [Lit SecureVault Smartcontract](https://testnet.bscscan.com/address/0x047B3cc70130F34387D00c923AA117cf22F989D2)
 
 ## Getting Started
 > Copy the `.env.example` file to `.env` and fill in the required values.
