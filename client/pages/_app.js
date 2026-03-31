@@ -1,23 +1,27 @@
-import '../styles/globals.css';
-import { Breadcrumb, Layout, Menu } from 'antd';
-
-const { Header, Content, Footer } = Layout;
+import "../styles/globals.css";
+import styles from "../styles/Navbar.module.css";
+import { LockOutlined } from "@ant-design/icons";
 
 function MyApp({ Component, pageProps }) {
-
   return (
-    <Layout>
-      <Header>
-        <div className="logo" />
-        <Menu theme="dark"
-          mode="horizontal"
-          defaultSelectedKeys={['2']}
-          items={[]}
-        >
-        </Menu>
-      </Header>
+    <>
+      <nav className={styles.navbar}>
+        <div className={styles.navInner}>
+          <a href="/" className={styles.brand}>
+            <div className={styles.brandIcon}>
+              <LockOutlined />
+            </div>
+            <span className={styles.brandName}>
+              Secure<span className={styles.brandAccent}>Vault</span>
+            </span>
+          </a>
+          <div className={styles.navRight}>
+            <span className={styles.navTag}>AES-256-GCM Encrypted</span>
+          </div>
+        </div>
+      </nav>
       <Component {...pageProps} />
-    </Layout>
+    </>
   );
 }
 

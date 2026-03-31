@@ -1,32 +1,143 @@
-html,
-body {
-  padding: 0;
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-}
+@import './theme.css';
 
-a {
-  color: #0070f3;
-  text-decoration: none;
-}
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
 
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  text-align: start;
-}
-
-* {
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-  body {
-    color: white;
-    background: black;
-  }
+html, body {
+  padding: 0;
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--primary-400);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+a:hover { color: var(--primary-300); }
+
+/* ─── Custom scrollbar ──────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
+
+/* ─── Keyframes ─────────────────────────────────────────────────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.spin { animation: spin 1s linear infinite; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fadeIn { animation: fadeIn 0.4s ease-out both; }
+
+/* ─── Focus states ──────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* ─── Ant Design dark overrides ─────────────────────────────────────────────── */
+
+/* Primary buttons */
+.ant-btn-primary {
+  background: var(--gradient-primary) !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.3) !important;
+  transition: all var(--transition-normal) !important;
+}
+.ant-btn-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 24px rgba(99,102,241,0.45) !important;
+}
+
+/* Modals */
+.ant-modal-content {
+  background: var(--bg-card) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-xl) !important;
+}
+.ant-modal-mask { background: rgba(0,0,0,0.7) !important; }
+
+/* Inputs */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-password {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary) !important;
+  transition: all var(--transition-fast) !important;
+}
+.ant-input:hover,
+.ant-input-affix-wrapper:hover {
+  border-color: rgba(99,102,241,0.4) !important;
+}
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  border-color: var(--primary-500) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15) !important;
+}
+.ant-input-password-icon { color: var(--text-muted) !important; }
+
+/* Notification */
+.ant-notification-notice {
+  background: var(--bg-tertiary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-lg) !important;
+}
+.ant-notification-notice-message { color: var(--text-primary) !important; }
+.ant-notification-notice-description { color: var(--text-secondary) !important; }
+
+/* Progress bar */
+.ant-progress-inner { background: rgba(255,255,255,0.06) !important; }
+
+/* Dropdown / menu */
+.ant-dropdown-menu {
+  background: var(--bg-tertiary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-lg) !important;
+}
+.ant-dropdown-menu-item { color: var(--text-primary) !important; }
+.ant-dropdown-menu-item:hover { background: rgba(99,102,241,0.1) !important; }
+
+/* Popconfirm */
+.ant-popover-inner {
+  background: var(--bg-tertiary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-lg) !important;
+}
+.ant-popover-message-title { color: var(--text-primary) !important; }
+.ant-popover-buttons .ant-btn { border-radius: var(--radius-sm) !important; }
+
+/* Spin */
+.ant-spin-dot-item { background-color: var(--primary-500) !important; }
+
+/* Empty state */
+.ant-empty-description { color: var(--text-muted) !important; }
+
+/* Search input */
+.ant-input-search .ant-input-group-addon .ant-btn {
+  background: var(--primary-600) !important;
+  border-color: var(--primary-600) !important;
 }

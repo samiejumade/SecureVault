@@ -1,5 +1,5 @@
 {
-  "name": "lit-encrypt-decrypt",
+  "name": "securevault",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,7 +12,6 @@
     "@ant-design/icons": "^4.8.0",
     "@ethersproject/contracts": "^5.7.0",
     "@ethersproject/providers": "^5.7.2",
-    "@lit-protocol/sdk-browser": "^1.1.234",
     "@pinata/sdk": "^2.1.0",
     "antd": "^4.24.3",
     "eslint": "8.27.0",

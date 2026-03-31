@@ -1,0 +1,376 @@
+/* ─── Hero Section ─────────────────────────────────────────────────────────── */
+
+.hero {
+  position: relative;
+  min-height: calc(100vh - 64px); /* subtract navbar height */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+  padding: 4rem 2rem;
+  overflow: hidden;
+}
+
+/* ── Animated gradient orbs ── */
+.orbBlue,
+.orbPurple,
+.orbGreen {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+  animation: float 8s ease-in-out infinite;
+}
+.orbBlue {
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, #6366f1, #3b82f6);
+  top: -120px;
+  left: -80px;
+  animation-delay: 0s;
+}
+.orbPurple {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, #8b5cf6, #ec4899);
+  bottom: -100px;
+  right: 20%;
+  animation-delay: 3s;
+}
+.orbGreen {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, #10b981, #06b6d4);
+  top: 30%;
+  right: 0;
+  animation-delay: 5s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-30px) scale(1.05); }
+}
+
+/* ── Left content ── */
+.heroContent {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #818cf8;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  padding: 6px 14px;
+  border-radius: 20px;
+  width: fit-content;
+  animation: fadeSlideDown 0.6s ease-out both;
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #f1f5f9;
+  animation: fadeSlideDown 0.6s ease-out 0.1s both;
+}
+
+.gradientText {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 40%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.heroDescription {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #94a3b8;
+  max-width: 520px;
+  animation: fadeSlideDown 0.6s ease-out 0.2s both;
+}
+
+/* ── Feature pills ── */
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  animation: fadeSlideDown 0.6s ease-out 0.3s both;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 12px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+
+.featureIcon {
+  color: #6366f1;
+  font-size: 0.9rem;
+}
+
+/* ── CTA ── */
+.ctaRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  animation: fadeSlideDown 0.6s ease-out 0.4s both;
+}
+
+.connectButton {
+  height: 52px !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  border: none !important;
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.35) !important;
+  transition: all 0.25s ease !important;
+  width: fit-content !important;
+  padding: 0 2rem !important;
+}
+
+.connectButton:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.5) !important;
+}
+
+.ctaNote {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* ── Right visual ── */
+.heroVisual {
+  position: relative;
+  flex: 0 0 auto;
+  width: 380px;
+  height: 420px;
+  z-index: 1;
+  animation: fadeSlideUp 0.8s ease-out 0.3s both;
+}
+
+/* Floating mock password card */
+.floatingCard {
+  background: rgba(17, 24, 39, 0.9);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.1) inset;
+  backdrop-filter: blur(20px);
+  animation: cardFloat 6s ease-in-out infinite;
+}
+
+@keyframes cardFloat {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-14px) rotate(-1deg); }
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: rgba(99, 102, 241, 0.08);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.12);
+}
+
+.cardDots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.cardTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.cardContent {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mockRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mockLabel {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.mockShield {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #10b981;
+  font-size: 0.8rem;
+}
+
+.mockField {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mockKey {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mockVal {
+  font-size: 0.9rem;
+  color: #e2e8f0;
+  font-family: "SF Mono", Consolas, monospace;
+}
+
+.mockBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+/* Floating stat chips */
+.statCard {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  animation: statFloat 7s ease-in-out infinite;
+}
+
+.statCard1 {
+  top: -20px;
+  right: -30px;
+  animation-delay: 1s;
+}
+
+.statCard2 {
+  bottom: 10px;
+  left: -40px;
+  animation-delay: 3.5s;
+}
+
+@keyframes statFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.statIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.statNum {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  line-height: 1.1;
+}
+
+.statDesc {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+/* ── Animations ── */
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .hero {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 2rem;
+    padding: 3rem 1.5rem;
+  }
+  .heroContent { align-items: center; max-width: 100%; }
+  .features { justify-content: center; }
+  .heroVisual { width: 320px; height: 360px; }
+  .statCard1 { right: -10px; }
+  .statCard2 { left: -10px; }
+}
+
+@media (max-width: 600px) {
+  .heroVisual { display: none; }
+  .heroTitle { font-size: 2.2rem; }
+  .connectButton { width: 100% !important; }
+}
