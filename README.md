@@ -51,9 +51,9 @@ const accessControlConditions = [
 
 ### Deployed Resources:
 
-- [Lit SecureVault App](https://lit-password-manager.vercel.app/)
-- [Lit SecureVault Subgraph]()
-- [Lit SecureVault Smartcontract](https://testnet.bscscan.com/address/0x047B3cc70130F34387D00c923AA117cf22F989D2)
+- [Lit Password Manager App](https://lit-password-manager.vercel.app/)
+- [Lit Password Manager Subgraph]()
+- [Lit Password Manager Smartcontract](https://testnet.bscscan.com/address/0x047B3cc70130F34387D00c923AA117cf22F989D2)
 
 ## Getting Started
 > Copy the `.env.example` file to `.env` and fill in the required values.
@@ -101,8 +101,9 @@ yarn dev
 
 This is experimental software and is provided on an "as is" and "as available" basis.
 
-Lit SecureVault is a proof of concept and is not ready for production use. It is not audited and has not been tested for security. Use at your own risk.
+SecureVault is a proof of concept and is not ready for production use. It is not audited and has not been tested for security. Use at your own risk.
 I do not give any warranties and will not be liable for any loss incurred through any use of this codebase.
 
 ### Demo
 
+https://github.com/samiejumade/SecureVault/blob/main/resources/Lit%20Protocol%20-%20SecureVault%20-%2024%20July%202025.mp4

@@ -18,5 +18,9 @@
     "dotenv": "^16.0.3",
     "ethers": "^5.7.0",
     "hardhat": "^2.10.2"
+  },
+  "dependencies": {
+    "less": "^4.4.0",
+    "less-loader": "^12.3.0"
   }
 }
