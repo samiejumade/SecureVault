@@ -1,8 +1,8 @@
-import { Button } from "antd";
-import { LockOutlined, SecurityScanOutlined, CloudServerOutlined, ThunderboltOutlined } from "@ant-design/icons";
+import { Button, Space } from "antd";
+import { LockOutlined, SecurityScanOutlined, CloudServerOutlined, ThunderboltOutlined, WalletOutlined } from "@ant-design/icons";
 import styles from "../styles/Hero.module.css";
 
-const HeroSection = ({ onConnectWallet, isConnecting }) => {
+const HeroSection = ({ onConnectWallet, isConnecting, onShowHelp }) => {
   return (
     <div className={styles.hero}>
       {/* Animated background orbs */}
@@ -50,16 +50,26 @@ const HeroSection = ({ onConnectWallet, isConnecting }) => {
         </div>
 
         <div className={styles.ctaRow}>
-          <Button
-            type="primary"
-            size="large"
-            onClick={onConnectWallet}
-            loading={isConnecting}
-            icon={<LockOutlined />}
-            className={styles.connectButton}
-          >
-            {isConnecting ? "Connecting…" : "Connect Wallet to Get Started"}
-          </Button>
+          <Space size="middle">
+            <Button
+              type="primary"
+              size="large"
+              onClick={onConnectWallet}
+              loading={isConnecting}
+              icon={<WalletOutlined />}
+              className={styles.connectButton}
+            >
+              {isConnecting ? "Connecting…" : "Connect Wallet"}
+            </Button>
+            <Button
+              type="default"
+              size="large"
+              onClick={onShowHelp}
+              className={styles.helpButton}
+            >
+              How to Start?
+            </Button>
+          </Space>
           <p className={styles.ctaNote}>
             Works with MetaMask · No sign-up required
           </p>

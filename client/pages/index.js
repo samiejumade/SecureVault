@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import Head from "next/head";
 import { GraphQLClient, gql } from "graphql-request";
-import { Web3Provider } from "@ethersproject/providers";
 import { Contract } from "@ethersproject/contracts";
 import {
   Button,
@@ -25,12 +24,17 @@ import {
   encryptString,
   decryptString,
 } from "../lib/crypto";
+import { walletClientToSigner } from "../lib/wagmi-ethers";
 import HeroSection from "../components/HeroSection";
 import PasswordGrid from "../components/PasswordGrid";
+import HelpCenter from "../components/HelpCenter";
+
+// ─── Wagmi v2 Hooks ───────────────────────────────────────────────────────────
+import { useAccount, useDisconnect, useWalletClient, useSwitchChain } from "wagmi";
+import { useModal } from "connectkit";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const CHAIN_ID = 80002;      // Polygon Amoy Testnet
-const CHAIN_HEX = "0x13882";
+const CHAIN_ID = 80002; // Polygon Amoy Testnet
 
 const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 const abi = [
@@ -67,7 +71,6 @@ const GET_CREDENTIALS_QUERY = gql`
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Upload encrypted JSON to IPFS via server-side proxy */
 const pinDataToIPFS = async (data) => {
   const res = await fetch("/api/pin", {
     method: "POST",
@@ -81,7 +84,6 @@ const pinDataToIPFS = async (data) => {
   return res.json();
 };
 
-/** Generate a secure 16-char password */
 const generateRandomPassword = () => {
   const chars =
     "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -91,7 +93,6 @@ const generateRandomPassword = () => {
     .join("");
 };
 
-/** 0-100 password strength score */
 const getPasswordStrength = (pwd = "") => {
   let s = 0;
   if (pwd.length >= 8) s += 20;
@@ -111,7 +112,6 @@ const strengthLabel = (score) => {
   return { text: "Strong", color: "#52c41a" };
 };
 
-/** Fetch from IPFS via multiple gateways */
 const fetchFromIPFS = async (ipfsHash) => {
   const gateways = [
     `https://gateway.pinata.cloud/ipfs/${ipfsHash}`,
@@ -137,19 +137,25 @@ const fetchFromIPFS = async (ipfsHash) => {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function Home() {
+  // ─── Wagmi v2 hooks ─────────────────────────────────────────────────────────
+  const { address, isConnected, chain } = useAccount();
+  const { disconnect } = useDisconnect();
+  const { data: walletClient } = useWalletClient();
+  const { switchChain } = useSwitchChain();
+  const { setOpen: openConnectKit } = useModal();
+
+  // ─── Local state ────────────────────────────────────────────────────────────
   const [credentialsArr, setCredentialsArr] = useState([]);
   const [credentials, setCredentials] = useState({});
   const [editingCredentials, setEditingCredentials] = useState({});
   const [loading, setLoading] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [provider, setProvider] = useState(null);
-  const [signer, setSigner] = useState(null);
   const [contract, setContract] = useState(null);
-  const [account, setAccount] = useState(null);
-  const [cryptoKey, setCryptoKey] = useState(null); // AES-256-GCM key
+  const [cryptoKey, setCryptoKey] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+  const [isInitializing, setIsInitializing] = useState(false);
 
   // ─── Notifications ──────────────────────────────────────────────────────────
   const showNotification = useCallback(({ type, message, description }) => {
@@ -161,125 +167,100 @@ export default function Home() {
     });
   }, []);
 
-  // ─── Lifecycle ──────────────────────────────────────────────────────────────
+  // ─── Derive encryption key + contract when wallet connects ──────────────────
   useEffect(() => {
-    if (!provider) return;
-    const reload = () => window.location.reload();
-    window.ethereum?.on("accountsChanged", reload);
-    window.ethereum?.on("chainChanged", reload);
-    return () => window.ethereum?.removeAllListeners();
-  }, [provider]);
-
-  useEffect(() => {
-    if (contract && account && cryptoKey) {
-      getCredentials();
-    }
-  }, [contract, account, cryptoKey]);
-
-  // ─── Connect Wallet ──────────────────────────────────────────────────────────
-  const handleConnectWallet = async () => {
-    if (!window?.ethereum) {
-      showNotification({
-        type: "error",
-        message: "No wallet found",
-        description: "Please install MetaMask to use SecureVault.",
-      });
+    if (!isConnected || !walletClient || !address) {
+      setContract(null);
+      setCryptoKey(null);
+      setCredentialsArr([]);
       return;
     }
-    setIsConnecting(true);
-    try {
-      // 1. Request accounts
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
 
-      // 2. Switch / add Polygon Amoy network
-      const p = new Web3Provider(window.ethereum);
-      const { chainId } = await p.getNetwork();
-      if (chainId !== CHAIN_ID) {
-        try {
-          await window.ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: CHAIN_HEX }],
-          });
-        } catch (switchErr) {
-          if (switchErr.code === 4902) {
-            await window.ethereum.request({
-              method: "wallet_addEthereumChain",
-              params: [{
-                chainId: CHAIN_HEX,
-                chainName: "Polygon Amoy Testnet",
-                nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
-                rpcUrls: ["https://rpc-amoy.polygon.technology/"],
-                blockExplorerUrls: ["https://amoy.polygonscan.com/"],
-              }],
-            });
-          } else {
-            throw switchErr;
-          }
-        }
+    // Check chain — if wrong, prompt to switch
+    if (chain?.id !== CHAIN_ID) {
+      showNotification({
+        type: "warning",
+        message: "Wrong network",
+        description: "Please switch to Polygon Amoy Testnet.",
+      });
+      if (switchChain) {
+        switchChain({ chainId: CHAIN_ID });
       }
-
-      const freshProvider = new Web3Provider(window.ethereum);
-      const freshSigner = freshProvider.getSigner();
-      const contractInstance = new Contract(contractAddress, abi, freshSigner);
-
-      // 3. Derive AES encryption key from wallet signature
-      showNotification({
-        type: "info",
-        message: "👆 Sign the message in MetaMask",
-        description:
-          "SecureVault needs you to sign a message to derive your encryption key. " +
-          "This is deterministic — the same wallet always generates the same key. No gas required.",
-      });
-
-      const key = await deriveEncryptionKey(freshSigner, accounts[0]);
-
-      setProvider(freshProvider);
-      setSigner(freshSigner);
-      setAccount(accounts[0]);
-      setContract(contractInstance);
-      setCryptoKey(key);
-
-      showNotification({
-        type: "success",
-        message: "✅ Wallet connected",
-        description: `Connected: ${accounts[0].slice(0, 6)}…${accounts[0].slice(-4)}`,
-      });
-    } catch (err) {
-      showNotification({
-        type: "error",
-        message: "Failed to connect wallet",
-        description: err.message,
-      });
-    } finally {
-      setIsConnecting(false);
+      return;
     }
+
+    const init = async () => {
+      if (isInitializing) return;
+      setIsInitializing(true);
+      try {
+        const signer = walletClientToSigner(walletClient);
+        const contractInstance = new Contract(contractAddress, abi, signer);
+
+        showNotification({
+          type: "info",
+          message: "👆 Sign the message in your wallet",
+          description:
+            "Sign a message to derive your encryption key. " +
+            "Same wallet always generates the same key. No gas required.",
+        });
+
+        const key = await deriveEncryptionKey(signer, address);
+
+        setContract(contractInstance);
+        setCryptoKey(key);
+
+        showNotification({
+          type: "success",
+          message: "✅ Wallet connected",
+          description: `Connected: ${address.slice(0, 6)}…${address.slice(-4)}`,
+        });
+      } catch (err) {
+        console.error("Init error:", err);
+        showNotification({
+          type: "error",
+          message: "Failed to initialize",
+          description: err.message,
+        });
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    init();
+  }, [isConnected, walletClient, address, chain?.id]);
+
+  // ─── Fetch credentials when contract + key ready ────────────────────────────
+  useEffect(() => {
+    if (contract && address && cryptoKey) {
+      getCredentials();
+    }
+  }, [contract, address, cryptoKey]);
+
+  // ─── Connect Wallet ─────────────────────────────────────────────────────────
+  const handleConnectWallet = () => {
+    openConnectKit(true);
   };
 
-  // ─── Disconnect ──────────────────────────────────────────────────────────────
+  // ─── Disconnect ─────────────────────────────────────────────────────────────
   const handleDisconnect = () => {
+    disconnect();
     setCredentialsArr([]);
-    setProvider(null);
-    setSigner(null);
-    setAccount(null);
     setContract(null);
     setCryptoKey(null);
   };
 
-  // ─── Fetch & Decrypt Credentials ─────────────────────────────────────────────
+  // ─── Fetch & Decrypt Credentials ────────────────────────────────────────────
   const getCredentials = useCallback(async () => {
-    if (!contract || !account || !cryptoKey) return;
+    if (!contract || !address || !cryptoKey) return;
     setLoading(true);
     try {
       let keys = [];
 
-      // Try subgraph first, fall back to direct contract
       try {
         const result = await graphClient.request(GET_CREDENTIALS_QUERY, {
           orderBy: "updatedAt",
           orderDirection: "desc",
-          where: { owner: account, isDeleted: false },
+          where: { owner: address.toLowerCase(), isDeleted: false },
         });
         keys = result.keys;
       } catch {
@@ -289,7 +270,7 @@ export default function Home() {
           .map((k) => ({
             keyId: k.id.toString(),
             ipfsHash: k.ipfsHash,
-            owner: account,
+            owner: address.toLowerCase(),
             isDeleted: k.isDeleted,
           }));
       }
@@ -298,13 +279,10 @@ export default function Home() {
       for (const { ipfsHash, keyId } of keys) {
         try {
           const ipfsData = await fetchFromIPFS(ipfsHash);
-
-          // Only handle new AES-GCM format; skip old Lit Protocol format
           if (ipfsData.version !== "aes-gcm-v1") {
-            console.warn(`Skipping credential ${keyId}: old Lit Protocol format (not supported).`);
+            console.warn(`Skipping credential ${keyId}: old format.`);
             continue;
           }
-
           const plaintext = await decryptString(cryptoKey, ipfsData);
           decrypted.push({ id: keyId, ...JSON.parse(plaintext) });
         } catch {
@@ -322,11 +300,11 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [contract, account, cryptoKey]);
+  }, [contract, address, cryptoKey]);
 
-  // ─── Save / Update ───────────────────────────────────────────────────────────
+  // ─── Save / Update ──────────────────────────────────────────────────────────
   const handleSaveCredentials = async (creds) => {
-    if (!account || !contract || !cryptoKey) {
+    if (!address || !contract || !cryptoKey) {
       showNotification({ type: "error", message: "Please connect your wallet", description: "" });
       return;
     }
@@ -347,7 +325,6 @@ export default function Home() {
 
     setLoading(true);
     try {
-      // Step 1: Encrypt (instant — no MetaMask popup needed)
       showNotification({
         type: "info",
         message: "🔐 Encrypting…",
@@ -356,7 +333,6 @@ export default function Home() {
 
       const encryptedPayload = await encryptString(cryptoKey, JSON.stringify(creds));
 
-      // Step 2: Pin to IPFS
       showNotification({
         type: "info",
         message: "📤 Uploading to IPFS…",
@@ -369,11 +345,10 @@ export default function Home() {
       }
       const { IpfsHash } = pinResult;
 
-      // Step 3: Blockchain transaction (triggers MetaMask tx popup)
       showNotification({
         type: "info",
-        message: "👆 Confirm transaction in MetaMask",
-        description: "MetaMask will ask you to approve a small blockchain transaction to save your password hash on-chain.",
+        message: "👆 Confirm transaction in your wallet",
+        description: "Your wallet will ask you to approve a small blockchain transaction.",
       });
 
       if (creds?.id) {
@@ -401,7 +376,7 @@ export default function Home() {
     }
   };
 
-  // ─── Delete ──────────────────────────────────────────────────────────────────
+  // ─── Delete ─────────────────────────────────────────────────────────────────
   const handleDeleteCredential = async (id) => {
     if (!contract) {
       showNotification({ type: "error", message: "Please connect your wallet", description: "" });
@@ -420,7 +395,7 @@ export default function Home() {
     }
   };
 
-  // ─── Client-side search ───────────────────────────────────────────────────────
+  // ─── Client-side search ─────────────────────────────────────────────────────
   const filteredCredentials = searchInput.trim()
     ? credentialsArr.filter(
         (c) =>
@@ -429,7 +404,7 @@ export default function Home() {
       )
     : credentialsArr;
 
-  // ─── Password Strength Bar ────────────────────────────────────────────────────
+  // ─── Password Strength Bar ─────────────────────────────────────────────────
   const PasswordStrengthBar = ({ password }) => {
     const score = getPasswordStrength(password);
     const { text, color } = strengthLabel(score);
@@ -442,7 +417,7 @@ export default function Home() {
     );
   };
 
-  // ─── Modals ───────────────────────────────────────────────────────────────────
+  // ─── Modals ─────────────────────────────────────────────────────────────────
   const renderAddModal = () => (
     <Modal
       title={null}
@@ -521,7 +496,9 @@ export default function Home() {
     </Modal>
   );
 
-  // ─── Render ───────────────────────────────────────────────────────────────────
+  const isReady = isConnected && cryptoKey && contract;
+
+  // ─── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className={styles.container}>
       <Head>
@@ -538,8 +515,12 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        {!provider ? (
-          <HeroSection onConnectWallet={handleConnectWallet} isConnecting={isConnecting} />
+        {!isReady ? (
+          <HeroSection
+            onConnectWallet={handleConnectWallet}
+            isConnecting={isInitializing}
+            onShowHelp={() => setIsHelpModalOpen(true)}
+          />
         ) : (
           <>
             <div className={styles.appHeader}>
@@ -547,8 +528,8 @@ export default function Home() {
                 <h2 className={styles.welcomeMessage}>Welcome back! 👋</h2>
                 <p className={styles.walletAddress}>
                   <WalletOutlined style={{ marginRight: 6 }} />
-                  {account?.slice(0, 6)}…{account?.slice(-4)}
-                  <span className={styles.networkBadge}>Polygon Amoy</span>
+                  {address?.slice(0, 6)}…{address?.slice(-4)}
+                  <span className={styles.networkBadge}>{chain?.name || "Polygon Amoy"}</span>
                 </p>
               </div>
               <Button type="default" icon={<LogoutOutlined />} onClick={handleDisconnect} className={styles.logoutButton}>
@@ -573,6 +554,7 @@ export default function Home() {
 
         {renderAddModal()}
         {renderEditModal()}
+        <HelpCenter open={isHelpModalOpen} onCancel={() => setIsHelpModalOpen(false)} />
       </main>
 
       <footer className={styles.footer}>
