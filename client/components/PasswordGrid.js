@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Row, Col, Empty, Spin, Input, Button, Space, Dropdown, Menu } from 'antd';
+import { Row, Col, Empty, Spin, Input, Button, Space, Dropdown, Menu, Select } from 'antd';
 import { 
   PlusCircleOutlined, 
   SyncOutlined, 
   SearchOutlined,
-  FilterOutlined,
   AppstoreOutlined,
   UnorderedListOutlined,
-  SortAscendingOutlined
+  SortAscendingOutlined,
+  SaveOutlined,
+  FilterOutlined,
 } from '@ant-design/icons';
 import PasswordCard from './PasswordCard';
 import styles from '../styles/PasswordGrid.module.css';
@@ -16,7 +17,7 @@ const { Search } = Input;
 
 const PasswordGrid = ({ 
   credentials, 
-  allCount,        // total stored passwords (unfiltered)
+  allCount,
   loading, 
   searchInput,
   onSearch,
@@ -24,7 +25,10 @@ const PasswordGrid = ({
   onAdd,
   onRefresh,
   onEdit,
-  onDelete
+  onDelete,
+  categoryFilter,
+  onCategoryChange,
+  categories = [],
 }) => {
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('site');
@@ -32,17 +36,20 @@ const PasswordGrid = ({
   const sortOptions = [
     { key: 'site', label: 'Sort by Site' },
     { key: 'username', label: 'Sort by Username' },
-    { key: 'recent', label: 'Recently Added' }
+    { key: 'recent', label: 'Recently Added' },
+    { key: 'category', label: 'Sort by Category' },
   ];
 
   const sortedCredentials = [...credentials].sort((a, b) => {
     switch (sortBy) {
       case 'username':
-        return a.username.localeCompare(b.username);
+        return (a.username || '').localeCompare(b.username || '');
       case 'recent':
         return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+      case 'category':
+        return (a.category || '').localeCompare(b.category || '');
       default:
-        return a.site.localeCompare(b.site);
+        return (a.site || '').localeCompare(b.site || '');
     }
   });
 
@@ -64,17 +71,17 @@ const PasswordGrid = ({
     <div className={styles.passwordGrid}>
       <div className={styles.gridHeader}>
         <div className={styles.headerLeft}>
-          <h2 className={styles.gridTitle}>My Passwords</h2>
+          <h2 className={styles.gridTitle}>My Vault</h2>
           <span className={styles.credentialCount}>
-            {searchInput
+            {searchInput || categoryFilter !== 'all'
               ? `${credentials.length} of ${allCount ?? credentials.length} match`
-              : `${credentials.length} password${credentials.length !== 1 ? 's' : ''}`}
+              : `${credentials.length} login${credentials.length !== 1 ? 's' : ''} saved`}
           </span>
         </div>
         
         <div className={styles.headerRight}>
           <Search
-            placeholder="Search passwords..."
+            placeholder="Search logins..."
             value={searchInput}
             onChange={(e) => onSearchChange(e.target.value)}
             onSearch={onSearch}
@@ -83,6 +90,24 @@ const PasswordGrid = ({
             className={styles.searchInput}
             allowClear
           />
+
+          {/* Category filter */}
+          {categories.length > 0 && (
+            <Select
+              value={categoryFilter || 'all'}
+              onChange={onCategoryChange}
+              className={styles.categorySelect}
+              dropdownStyle={{ background: "#111827", border: "1px solid rgba(99,102,241,0.2)" }}
+              suffixIcon={<FilterOutlined style={{ color: '#6366f1' }} />}
+            >
+              <Select.Option value="all">All Categories</Select.Option>
+              {categories.map(cat => (
+                <Select.Option key={cat.key} value={cat.key}>
+                  {cat.icon} {cat.label}
+                </Select.Option>
+              ))}
+            </Select>
+          )}
           
           <Space.Compact>
             <Button
@@ -107,11 +132,11 @@ const PasswordGrid = ({
           
           <Button 
             type="primary" 
-            icon={<PlusCircleOutlined />}
+            icon={<SaveOutlined />}
             onClick={onAdd}
             className={styles.addButton}
           >
-            Add Password
+            Save Login
           </Button>
           
           <Button 
@@ -127,22 +152,22 @@ const PasswordGrid = ({
         {loading && credentials.length === 0 ? (
           <div className={styles.loadingContainer}>
             <Spin size="large" />
-            <p>Loading your passwords...</p>
+            <p>Loading your saved logins...</p>
           </div>
         ) : credentials.length === 0 ? (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description={
               <div className={styles.emptyState}>
-                <h3>No passwords saved yet</h3>
-                <p>Get started by adding your first password</p>
+                <h3>No logins saved yet</h3>
+                <p>Store your first website login — encrypted and secure on the blockchain</p>
                 <Button 
                   type="primary" 
-                  icon={<PlusCircleOutlined />}
+                  icon={<SaveOutlined />}
                   onClick={onAdd}
                   size="large"
                 >
-                  Add Your First Password
+                  Save Your First Login
                 </Button>
               </div>
             }

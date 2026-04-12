@@ -141,3 +141,36 @@ a:hover { color: var(--primary-300); }
   background: var(--primary-600) !important;
   border-color: var(--primary-600) !important;
 }
+
+/* Select / dropdown */
+.ant-select-selector {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary) !important;
+}
+.ant-select-dropdown {
+  background: var(--bg-tertiary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-lg) !important;
+}
+.ant-select-item {
+  color: var(--text-primary) !important;
+}
+.ant-select-item-option-active {
+  background: rgba(99,102,241,0.1) !important;
+}
+.ant-select-item-option-selected {
+  background: rgba(99,102,241,0.15) !important;
+}
+.ant-select-arrow {
+  color: var(--text-muted) !important;
+}
+
+/* Switch */
+.ant-switch {
+  background: rgba(255,255,255,0.15) !important;
+}
+.ant-switch-checked {
+  background: var(--primary-600) !important;
+}

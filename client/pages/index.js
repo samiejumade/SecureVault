@@ -10,12 +10,17 @@ import {
   Popconfirm,
   Progress,
   Tooltip,
+  Select,
+  Tag,
 } from "antd";
 import {
   PlusCircleOutlined,
   LogoutOutlined,
   EditOutlined,
   WalletOutlined,
+  ThunderboltOutlined,
+  SaveOutlined,
+  LockOutlined,
 } from "@ant-design/icons";
 import styles from "../styles/Home.module.css";
 import "antd/dist/antd.css";
@@ -25,9 +30,18 @@ import {
   decryptString,
 } from "../lib/crypto";
 import { walletClientToSigner } from "../lib/wagmi-ethers";
+import {
+  getUserTier,
+  canAddCredential,
+  CATEGORIES,
+  detectCategory,
+} from "../lib/subscription";
 import HeroSection from "../components/HeroSection";
 import PasswordGrid from "../components/PasswordGrid";
 import HelpCenter from "../components/HelpCenter";
+import SubscriptionBanner from "../components/SubscriptionBanner";
+import PricingSection from "../components/PricingSection";
+import PasswordHealth from "../components/PasswordHealth";
 
 // ─── Wagmi v2 Hooks ───────────────────────────────────────────────────────────
 import { useAccount, useDisconnect, useWalletClient, useSwitchChain } from "wagmi";
@@ -84,10 +98,10 @@ const pinDataToIPFS = async (data) => {
   return res.json();
 };
 
-const generateRandomPassword = () => {
+const generateRandomPassword = (length = 16) => {
   const chars =
     "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()-+ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  return Array(16)
+  return Array(length)
     .fill(null)
     .map(() => chars[Math.floor(Math.random() * chars.length)])
     .join("");
@@ -154,8 +168,12 @@ export default function Home() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [isInitializing, setIsInitializing] = useState(false);
+  const [userTier, setUserTier] = useState(null);
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [showPasswordGen, setShowPasswordGen] = useState(false);
 
   // ─── Notifications ──────────────────────────────────────────────────────────
   const showNotification = useCallback(({ type, message, description }) => {
@@ -166,6 +184,13 @@ export default function Home() {
       duration: 7,
     });
   }, []);
+
+  // ─── Load tier when address changes ─────────────────────────────────────────
+  useEffect(() => {
+    if (address) {
+      setUserTier(getUserTier(address));
+    }
+  }, [address]);
 
   // ─── Derive encryption key + contract when wallet connects ──────────────────
   useEffect(() => {
@@ -284,7 +309,12 @@ export default function Home() {
             continue;
           }
           const plaintext = await decryptString(cryptoKey, ipfsData);
-          decrypted.push({ id: keyId, ...JSON.parse(plaintext) });
+          const parsed = JSON.parse(plaintext);
+          // Auto-assign category if missing
+          if (!parsed.category) {
+            parsed.category = detectCategory(parsed.site);
+          }
+          decrypted.push({ id: keyId, ...parsed });
         } catch {
           continue;
         }
@@ -323,6 +353,17 @@ export default function Home() {
       return;
     }
 
+    // ─── Free tier limit check ────────────────────────────────────────────────
+    if (!creds?.id && userTier && !canAddCredential(userTier, credentialsArr.length)) {
+      showNotification({
+        type: "warning",
+        message: "🔒 Free Tier Limit Reached",
+        description: `You've used all ${userTier.maxCredentials} slots. Upgrade to Premium for unlimited logins.`,
+      });
+      setIsPricingOpen(true);
+      return;
+    }
+
     setLoading(true);
     try {
       showNotification({
@@ -331,7 +372,13 @@ export default function Home() {
         description: "Encrypting your password with AES-256-GCM.",
       });
 
-      const encryptedPayload = await encryptString(cryptoKey, JSON.stringify(creds));
+      // Ensure category is included
+      const credsWithCategory = {
+        ...creds,
+        category: creds.category || detectCategory(creds.site),
+      };
+
+      const encryptedPayload = await encryptString(cryptoKey, JSON.stringify(credsWithCategory));
 
       showNotification({
         type: "info",
@@ -361,6 +408,7 @@ export default function Home() {
         await tx.wait(1);
         setIsAddModalOpen(false);
         setCredentials({});
+        setShowPasswordGen(false);
         showNotification({ type: "success", message: "✅ Credential saved!", description: "Stored on the blockchain." });
       }
 
@@ -395,14 +443,30 @@ export default function Home() {
     }
   };
 
-  // ─── Client-side search ─────────────────────────────────────────────────────
-  const filteredCredentials = searchInput.trim()
-    ? credentialsArr.filter(
-        (c) =>
-          c.site?.toLowerCase().includes(searchInput.toLowerCase()) ||
-          c.username?.toLowerCase().includes(searchInput.toLowerCase())
-      )
-    : credentialsArr;
+  // ─── Handle tier change from pricing modal ─────────────────────────────────
+  const handleTierChange = (newTier) => {
+    setUserTier(newTier);
+    showNotification({
+      type: "success",
+      message: `🎉 Upgraded to ${newTier.name}!`,
+      description: "Enjoy unlimited passwords and all premium features.",
+    });
+  };
+
+  // ─── Client-side search + category filter ──────────────────────────────────
+  const filteredCredentials = credentialsArr.filter((c) => {
+    const matchesSearch = !searchInput.trim() ||
+      c.site?.toLowerCase().includes(searchInput.toLowerCase()) ||
+      c.username?.toLowerCase().includes(searchInput.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || c.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  // ─── Auto-detect category when site changes ────────────────────────────────
+  const handleSiteChange = (value, setter, current) => {
+    const detected = detectCategory(value);
+    setter({ ...current, site: value, category: detected });
+  };
 
   // ─── Password Strength Bar ─────────────────────────────────────────────────
   const PasswordStrengthBar = ({ password }) => {
@@ -417,40 +481,134 @@ export default function Home() {
     );
   };
 
+  // ─── Category Selector ─────────────────────────────────────────────────────
+  const CategorySelector = ({ value, onChange }) => (
+    <Select
+      value={value || "other"}
+      onChange={onChange}
+      size="large"
+      style={{ width: "100%" }}
+      dropdownStyle={{ background: "#111827", border: "1px solid rgba(99,102,241,0.2)" }}
+    >
+      {CATEGORIES.map((cat) => (
+        <Select.Option key={cat.key} value={cat.key}>
+          <span>{cat.icon} {cat.label}</span>
+        </Select.Option>
+      ))}
+    </Select>
+  );
+
   // ─── Modals ─────────────────────────────────────────────────────────────────
   const renderAddModal = () => (
     <Modal
       title={null}
       open={isAddModalOpen}
-      onCancel={() => { setIsAddModalOpen(false); setCredentials({}); }}
+      onCancel={() => { setIsAddModalOpen(false); setCredentials({}); setShowPasswordGen(false); }}
       footer={null}
       width={500}
       centered
     >
       <div className={styles.encryptDecryptContainer}>
         <div className={styles.modalHeader}>
-          <div className={styles.modalIcon}><PlusCircleOutlined /></div>
-          <h3 className={styles.modalTitle}>Add New Password</h3>
+          <div className={styles.modalIcon}><SaveOutlined /></div>
+          <h3 className={styles.modalTitle}>Save Login Credential</h3>
         </div>
+        <p className={styles.modalSubtitle}>
+          Store your existing account login securely on the blockchain.
+        </p>
         <div className={styles.formField}>
           <label>Website or App</label>
-          <Input id="add-site" name="site" placeholder="example.com" value={credentials.site || ""} onChange={(e) => setCredentials({ ...credentials, site: e.target.value })} size="large" />
+          <Input
+            id="add-site"
+            name="site"
+            placeholder="e.g. netflix.com, amazon.in, facebook.com"
+            value={credentials.site || ""}
+            onChange={(e) => handleSiteChange(e.target.value, setCredentials, credentials)}
+            size="large"
+          />
+        </div>
+        <div className={styles.formField}>
+          <label>Category</label>
+          <CategorySelector
+            value={credentials.category}
+            onChange={(val) => setCredentials({ ...credentials, category: val })}
+          />
         </div>
         <div className={styles.formField}>
           <label>Username or Email</label>
-          <Input id="add-username" name="username" placeholder="your@email.com" value={credentials.username || ""} onChange={(e) => setCredentials({ ...credentials, username: e.target.value })} size="large" />
+          <Input
+            id="add-username"
+            name="username"
+            placeholder="your@email.com"
+            value={credentials.username || ""}
+            onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+            size="large"
+          />
         </div>
         <div className={styles.formField}>
           <label>Password</label>
-          <Input.Password id="add-password" name="password" placeholder="Enter a strong password" value={credentials.password || ""} onChange={(e) => setCredentials({ ...credentials, password: e.target.value })} size="large" />
+          <Input.Password
+            id="add-password"
+            name="password"
+            placeholder="Enter your existing password"
+            value={credentials.password || ""}
+            onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+            size="large"
+          />
           <PasswordStrengthBar password={credentials.password} />
         </div>
+
+        {/* Collapsible password generator */}
+        {!showPasswordGen ? (
+          <button
+            type="button"
+            className={styles.genToggle}
+            onClick={() => setShowPasswordGen(true)}
+          >
+            <ThunderboltOutlined /> Need a new password? Generate one
+          </button>
+        ) : (
+          <div className={styles.genSection}>
+            <div className={styles.genHeader}>
+              <ThunderboltOutlined style={{ color: "#8b5cf6" }} />
+              <span>Password Generator</span>
+            </div>
+            <div className={styles.genActions}>
+              <Button
+                className={styles.generateButton}
+                onClick={() => setCredentials({ ...credentials, password: generateRandomPassword(16) })}
+                size="middle"
+              >
+                16 chars
+              </Button>
+              <Button
+                className={styles.generateButton}
+                onClick={() => setCredentials({ ...credentials, password: generateRandomPassword(20) })}
+                size="middle"
+              >
+                20 chars
+              </Button>
+              <Button
+                className={styles.generateButton}
+                onClick={() => setCredentials({ ...credentials, password: generateRandomPassword(24) })}
+                size="middle"
+              >
+                24 chars
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className={styles.formActions}>
-          <Button className={styles.generateButton} onClick={() => setCredentials({ ...credentials, password: generateRandomPassword() })} size="large">
-            Generate Password
-          </Button>
-          <Button type="primary" className={styles.saveButton} loading={loading} onClick={() => handleSaveCredentials(credentials)} size="large">
-            Save Password
+          <Button
+            type="primary"
+            className={styles.saveButton}
+            loading={loading}
+            onClick={() => handleSaveCredentials(credentials)}
+            size="large"
+            icon={<LockOutlined />}
+          >
+            Encrypt & Save
           </Button>
         </div>
       </div>
@@ -469,27 +627,65 @@ export default function Home() {
       <div className={styles.encryptDecryptContainer}>
         <div className={styles.modalHeader}>
           <div className={styles.modalIcon}><EditOutlined /></div>
-          <h3 className={styles.modalTitle}>Edit Password</h3>
+          <h3 className={styles.modalTitle}>Edit Credential</h3>
         </div>
         <div className={styles.formField}>
           <label>Website or App</label>
-          <Input id="edit-site" name="site" placeholder="example.com" value={editingCredentials.site || ""} onChange={(e) => setEditingCredentials({ ...editingCredentials, site: e.target.value })} size="large" />
+          <Input
+            id="edit-site"
+            name="site"
+            placeholder="example.com"
+            value={editingCredentials.site || ""}
+            onChange={(e) => handleSiteChange(e.target.value, setEditingCredentials, editingCredentials)}
+            size="large"
+          />
+        </div>
+        <div className={styles.formField}>
+          <label>Category</label>
+          <CategorySelector
+            value={editingCredentials.category}
+            onChange={(val) => setEditingCredentials({ ...editingCredentials, category: val })}
+          />
         </div>
         <div className={styles.formField}>
           <label>Username or Email</label>
-          <Input id="edit-username" name="username" placeholder="your@email.com" value={editingCredentials.username || ""} onChange={(e) => setEditingCredentials({ ...editingCredentials, username: e.target.value })} size="large" />
+          <Input
+            id="edit-username"
+            name="username"
+            placeholder="your@email.com"
+            value={editingCredentials.username || ""}
+            onChange={(e) => setEditingCredentials({ ...editingCredentials, username: e.target.value })}
+            size="large"
+          />
         </div>
         <div className={styles.formField}>
           <label>Password</label>
-          <Input.Password id="edit-password" name="password" placeholder="Enter a strong password" value={editingCredentials.password || ""} onChange={(e) => setEditingCredentials({ ...editingCredentials, password: e.target.value })} size="large" />
+          <Input.Password
+            id="edit-password"
+            name="password"
+            placeholder="Enter password"
+            value={editingCredentials.password || ""}
+            onChange={(e) => setEditingCredentials({ ...editingCredentials, password: e.target.value })}
+            size="large"
+          />
           <PasswordStrengthBar password={editingCredentials.password} />
         </div>
         <div className={styles.formActions}>
-          <Button className={styles.generateButton} onClick={() => setEditingCredentials({ ...editingCredentials, password: generateRandomPassword() })} size="large">
+          <Button
+            className={styles.generateButton}
+            onClick={() => setEditingCredentials({ ...editingCredentials, password: generateRandomPassword() })}
+            size="large"
+          >
             Generate Password
           </Button>
-          <Button type="primary" className={styles.saveButton} loading={loading} onClick={() => handleSaveCredentials(editingCredentials)} size="large">
-            Update Password
+          <Button
+            type="primary"
+            className={styles.saveButton}
+            loading={loading}
+            onClick={() => handleSaveCredentials(editingCredentials)}
+            size="large"
+          >
+            Update Credential
           </Button>
         </div>
       </div>
@@ -503,7 +699,7 @@ export default function Home() {
     <div className={styles.container}>
       <Head>
         <title>SecureVault — Decentralized Password Manager</title>
-        <meta name="description" content="Secure, decentralized password management powered by AES-256-GCM encryption and blockchain storage." />
+        <meta name="description" content="Secure, decentralized password management powered by AES-256-GCM encryption and blockchain storage. Save your existing logins securely." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
         <meta property="og:title" content="SecureVault" />
@@ -537,6 +733,18 @@ export default function Home() {
               </Button>
             </div>
 
+            {/* Subscription Banner */}
+            {userTier && (
+              <SubscriptionBanner
+                tier={userTier}
+                credentialCount={credentialsArr.length}
+                onUpgrade={() => setIsPricingOpen(true)}
+              />
+            )}
+
+            {/* Password Health Dashboard */}
+            <PasswordHealth credentials={credentialsArr} />
+
             <PasswordGrid
               credentials={filteredCredentials}
               allCount={credentialsArr.length}
@@ -548,6 +756,9 @@ export default function Home() {
               onRefresh={getCredentials}
               onEdit={(cred) => { setEditingCredentials(cred); setIsEditModalOpen(true); }}
               onDelete={handleDeleteCredential}
+              categoryFilter={categoryFilter}
+              onCategoryChange={setCategoryFilter}
+              categories={CATEGORIES}
             />
           </>
         )}
@@ -555,6 +766,14 @@ export default function Home() {
         {renderAddModal()}
         {renderEditModal()}
         <HelpCenter open={isHelpModalOpen} onCancel={() => setIsHelpModalOpen(false)} />
+        <PricingSection
+          open={isPricingOpen}
+          onCancel={() => setIsPricingOpen(false)}
+          address={address}
+          currentTier={userTier}
+          onTierChange={handleTierChange}
+          walletClient={walletClient}
+        />
       </main>
 
       <footer className={styles.footer}>

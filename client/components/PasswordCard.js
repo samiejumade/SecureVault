@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, Button, Typography, Space, Tag, Tooltip, Popconfirm, message } from "antd";
+import { Card, Button, Typography, Space, Tag, Tooltip, Popconfirm, Progress, message } from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
@@ -11,6 +11,7 @@ import {
   LockOutlined,
   SafetyOutlined,
 } from "@ant-design/icons";
+import { CATEGORIES } from "../lib/subscription";
 import styles from "../styles/PasswordCard.module.css";
 
 const { Text } = Typography;
@@ -27,6 +28,25 @@ const getDomainFromSite = (site = "") => {
 const getFavicon = (site) =>
   `https://www.google.com/s2/favicons?domain=${getDomainFromSite(site)}&sz=32`;
 
+const getPasswordStrength = (pwd = "") => {
+  let s = 0;
+  if (pwd.length >= 8) s += 20;
+  if (pwd.length >= 12) s += 20;
+  if (pwd.length >= 16) s += 10;
+  if (/[a-z]/.test(pwd)) s += 10;
+  if (/[A-Z]/.test(pwd)) s += 10;
+  if (/[0-9]/.test(pwd)) s += 10;
+  if (/[^a-zA-Z0-9]/.test(pwd)) s += 20;
+  return Math.min(s, 100);
+};
+
+const strengthLabel = (score) => {
+  if (score < 30) return { text: "Weak", color: "#f43f5e" };
+  if (score < 60) return { text: "Fair", color: "#f59e0b" };
+  if (score < 80) return { text: "Good", color: "#fadb14" };
+  return { text: "Strong", color: "#10b981" };
+};
+
 const PasswordCard = ({ credential, onEdit, onDelete, loading }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -35,7 +55,6 @@ const PasswordCard = ({ credential, onEdit, onDelete, loading }) => {
       await navigator.clipboard.writeText(text);
       message.success(`${type} copied!`, 2);
     } catch {
-      // Fallback for older browsers
       const el = document.createElement("textarea");
       el.value = text;
       document.body.appendChild(el);
@@ -45,6 +64,10 @@ const PasswordCard = ({ credential, onEdit, onDelete, loading }) => {
       message.success(`${type} copied!`, 2);
     }
   };
+
+  const category = CATEGORIES.find((c) => c.key === credential.category) || CATEGORIES.find((c) => c.key === "other");
+  const pwdScore = getPasswordStrength(credential.password);
+  const pwdStrength = strengthLabel(pwdScore);
 
   return (
     <Card className={styles.passwordCard} bodyStyle={{ padding: 0 }} hoverable>
@@ -73,7 +96,7 @@ const PasswordCard = ({ credential, onEdit, onDelete, loading }) => {
         </div>
 
         <div className={styles.actions}>
-          <Tooltip title="Edit password">
+          <Tooltip title="Edit credential">
             <Button
               type="text"
               icon={<EditOutlined />}
@@ -82,7 +105,7 @@ const PasswordCard = ({ credential, onEdit, onDelete, loading }) => {
             />
           </Tooltip>
           <Popconfirm
-            title="Delete this password?"
+            title="Delete this credential?"
             description="This cannot be undone. The blockchain record will be soft-deleted."
             onConfirm={() => onDelete(credential.id)}
             okText="Yes, Delete"
@@ -90,7 +113,7 @@ const PasswordCard = ({ credential, onEdit, onDelete, loading }) => {
             okButtonProps={{ danger: true }}
             placement="topRight"
           >
-            <Tooltip title="Delete password">
+            <Tooltip title="Delete credential">
               <Button
                 type="text"
                 danger
@@ -110,7 +133,7 @@ const PasswordCard = ({ credential, onEdit, onDelete, loading }) => {
           <div className={styles.fieldHeader}>
             <UserOutlined className={styles.fieldIcon} />
             <Text type="secondary" className={styles.fieldLabel}>
-              Username
+              Username / Email
             </Text>
             <Tooltip title="Copy username">
               <Button
@@ -156,13 +179,32 @@ const PasswordCard = ({ credential, onEdit, onDelete, loading }) => {
           <Text className={`${styles.fieldValue} ${styles.passwordValue}`}>
             {showPassword ? credential.password : "••••••••••••"}
           </Text>
+          {/* Inline strength indicator */}
+          <div className={styles.strengthRow}>
+            <Progress
+              percent={pwdScore}
+              showInfo={false}
+              strokeColor={pwdStrength.color}
+              trailColor="rgba(255,255,255,0.04)"
+              size="small"
+              className={styles.strengthBar}
+            />
+            <span className={styles.strengthText} style={{ color: pwdStrength.color }}>
+              {pwdStrength.text}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Card footer */}
       <div className={styles.cardFooter}>
+        {category && (
+          <Tag className={styles.categoryTag} style={{ color: category.color, borderColor: `${category.color}33`, background: `${category.color}12` }}>
+            {category.icon} {category.label}
+          </Tag>
+        )}
         <Tag icon={<SafetyOutlined />} color="green" className={styles.statusTag}>
-          AES-256 Encrypted
+          Encrypted
         </Tag>
       </div>
     </Card>

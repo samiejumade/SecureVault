@@ -64,21 +64,30 @@ const HelpCenter = ({ open, onCancel }) => {
       title: "Get Free MATIC",
       icon: <ThunderboltOutlined />,
       content: (
-        <Space direction="vertical" size="middle">
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Paragraph>
-            You need a tiny amount of <strong>MATIC tokens</strong> to save passwords on the blockchain. You can get them for free!
+            You need a tiny amount of <strong>testnet MATIC</strong> to save passwords on the blockchain. Choose a faucet below:
           </Paragraph>
           <Button 
             icon={<ThunderboltOutlined />} 
-            href="https://faucet.stakepool.dev.br/amoy" 
+            href="https://www.alchemy.com/faucets/polygon-amoy" 
+            target="_blank"
+            block
+            type="primary"
+          >
+            Alchemy Faucet (Recommended)
+          </Button>
+          <Button 
+            icon={<ThunderboltOutlined />} 
+            href="https://faucet.polygon.technology/" 
             target="_blank"
             block
             danger
           >
-            Go to Amoy Faucet
+            Official Polygon Faucet
           </Button>
-          <Paragraph type="secondary">
-            Copy your wallet address from MetaMask, paste it into the faucet, and click "Request".
+          <Paragraph type="secondary" style={{ fontSize: "0.75rem", lineHeight: 1.4 }}>
+            * Alchemy requires a free account but skips difficult captchas. Just copy your wallet address from MetaMask, paste it in, and request tokens.
           </Paragraph>
         </Space>
       ),

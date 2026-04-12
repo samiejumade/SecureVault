@@ -1,0 +1,162 @@
+/* ─── SubscriptionBanner ────────────────────────────────────────────────────── */
+
+.banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 16px 20px;
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.bannerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.tierBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: white;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+
+.usageSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 120px;
+  max-width: 280px;
+}
+
+.usageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.usageLabel {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.usageCount {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  font-family: 'SF Mono', Consolas, monospace;
+}
+
+.usageBar {
+  margin: 0 !important;
+}
+
+.warningText {
+  font-size: 0.72rem;
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+.limitText {
+  font-size: 0.72rem;
+  color: #f43f5e;
+  font-weight: 600;
+}
+
+.proStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.proIcon {
+  color: #10b981;
+  font-size: 1rem;
+}
+
+.bannerRight {
+  flex-shrink: 0;
+}
+
+.upgradeButton {
+  height: 38px !important;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  background: linear-gradient(135deg, #f59e0b, #f97316) !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3) !important;
+  transition: all 0.25s ease !important;
+  padding: 0 1.25rem !important;
+}
+
+.upgradeButton:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 28px rgba(245, 158, 11, 0.45) !important;
+}
+
+.changePlanButton {
+  height: 38px !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #94a3b8 !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  transition: all 0.25s ease !important;
+  padding: 0 1.25rem !important;
+}
+
+.changePlanButton:hover {
+  border-color: rgba(99, 102, 241, 0.4) !important;
+  color: #818cf8 !important;
+  background: rgba(99, 102, 241, 0.08) !important;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .bannerLeft {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .tierBadge {
+    align-self: flex-start;
+  }
+  .usageSection {
+    max-width: 100%;
+  }
+  .upgradeButton {
+    width: 100% !important;
+  }
+}

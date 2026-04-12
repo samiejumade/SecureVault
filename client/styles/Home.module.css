@@ -111,11 +111,64 @@
   border-top: 1px solid var(--border-color);
 }
 
+.modalSubtitle {
+  margin: -0.5rem 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.genToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1px dashed rgba(139, 92, 246, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  color: #8b5cf6;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: all var(--transition-fast);
+}
+
+.genToggle:hover {
+  background: rgba(139, 92, 246, 0.06);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.genSection {
+  background: rgba(139, 92, 246, 0.04);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.genHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #a78bfa;
+}
+
+.genActions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
 .generateButton {
   background: var(--gradient-accent) !important;
   border: none !important;
   color: white !important;
   font-weight: 500 !important;
+  border-radius: var(--radius-sm) !important;
 }
 
 .saveButton {
