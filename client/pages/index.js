@@ -53,7 +53,7 @@ const CHAIN_ID = 80002; // Polygon Amoy Testnet
 const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 const abi = [
   "function addKey(string _ipfsHash)",
-  "function getMyKeys() view returns (tuple(uint256 id, string ipfsHash, bool isDeleted)[])",
+  "function getMyKeys() view returns (tuple(string ipfsHash, bool isDeleted)[])",
   "function softDeleteKey(uint256 _id)",
   "function updateKey(uint256 _id, string _ipfsHash)",
 ];
@@ -281,23 +281,26 @@ export default function Home() {
     try {
       let keys = [];
 
+      // Temporarily bypass The Graph until you update your Subgraph with the new contract address
       try {
+        if (!process.env.NEXT_PUBLIC_API_URL) throw new Error("Graph API empty");
         const result = await graphClient.request(GET_CREDENTIALS_QUERY, {
           orderBy: "updatedAt",
           orderDirection: "desc",
           where: { owner: address.toLowerCase(), isDeleted: false },
         });
-        keys = result.keys;
+        if (result.keys.length > 0) keys = result.keys;
+        else throw new Error("No keys on Graph, fallback to chain");
       } catch {
         const contractKeys = await contract.getMyKeys();
         keys = contractKeys
-          .filter((k) => !k.isDeleted)
-          .map((k) => ({
-            keyId: k.id.toString(),
+          .map((k, index) => ({
+            keyId: index.toString(), // Calculate ID directly from array position
             ipfsHash: k.ipfsHash,
             owner: address.toLowerCase(),
             isDeleted: k.isDeleted,
-          }));
+          }))
+          .filter((k) => !k.isDeleted);
       }
 
       const decrypted = [];
@@ -348,10 +351,6 @@ export default function Home() {
       showNotification({ type: "error", message: "Username already exists for this site", description: "" });
       return;
     }
-    if (creds.password.length < 12) {
-      showNotification({ type: "error", message: "Password must be at least 12 characters", description: "" });
-      return;
-    }
 
     // ─── Free tier limit check ────────────────────────────────────────────────
     if (!creds?.id && userTier && !canAddCredential(userTier, credentialsArr.length)) {
@@ -398,13 +397,19 @@ export default function Home() {
         description: "Your wallet will ask you to approve a small blockchain transaction.",
       });
 
+      // Polygon Amoy requires a minimum gas price of ~25-30 Gwei
+      const gasOverrides = {
+        maxPriorityFeePerGas: 30000000000, // 30 Gwei
+        maxFeePerGas: 30000000000, // 30 Gwei
+      };
+
       if (creds?.id) {
-        const tx = await contract.updateKey(creds.id, IpfsHash);
+        const tx = await contract.updateKey(creds.id, IpfsHash, gasOverrides);
         await tx.wait(1);
         setIsEditModalOpen(false);
         showNotification({ type: "success", message: "✅ Credential updated!", description: "Updated on the blockchain." });
       } else {
-        const tx = await contract.addKey(IpfsHash);
+        const tx = await contract.addKey(IpfsHash, gasOverrides);
         await tx.wait(1);
         setIsAddModalOpen(false);
         setCredentials({});
@@ -432,7 +437,11 @@ export default function Home() {
     }
     setLoading(true);
     try {
-      const tx = await contract.softDeleteKey(id);
+      const gasOverrides = {
+        maxPriorityFeePerGas: 30000000000,
+        maxFeePerGas: 30000000000,
+      };
+      const tx = await contract.softDeleteKey(id, gasOverrides);
       await tx.wait(1);
       showNotification({ type: "success", message: "✅ Credential deleted", description: "" });
       await getCredentials();
@@ -705,9 +714,7 @@ export default function Home() {
         <meta property="og:title" content="SecureVault" />
         <meta property="og:description" content="Web3-native password manager with AES-256-GCM encryption" />
         <meta property="og:type" content="website" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
       </Head>
 
       <main className={styles.main}>
